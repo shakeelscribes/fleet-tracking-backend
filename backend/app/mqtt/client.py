@@ -10,7 +10,7 @@ import asyncio
 import contextlib
 import logging
 
-from aiomqtt import Client, MqttError
+from aiomqtt import Client, MqttError, TLSParameters
 
 from app.core.config import settings
 from app.db.session import async_session_factory
@@ -21,6 +21,18 @@ logger = logging.getLogger("app.mqtt.client")
 
 RECONNECT_SECONDS = 5
 SUBSCRIBE_QOS = 1  # decision: QoS 1 - at least once; handler dedups via latest-only upsert
+
+
+def mqtt_client_kwargs() -> dict[str, object]:
+    """Connection kwargs shared by the subscriber and the simulator.
+
+    TLS (MQTT_TLS=true) is required by cloud brokers like HiveMQ Cloud (8883);
+    TLSParameters() with defaults validates against system CAs, which covers
+    HiveMQ's Let's Encrypt certificates."""
+    kwargs: dict[str, object] = {}
+    if settings.MQTT_TLS:
+        kwargs["tls_params"] = TLSParameters()
+    return kwargs
 
 
 def _subscription_topic() -> str:
@@ -54,6 +66,7 @@ async def _run_client() -> None:
         port=settings.MQTT_PORT,
         username=settings.MQTT_USERNAME or None,
         password=settings.MQTT_PASSWORD or None,
+        **mqtt_client_kwargs(),
     ) as client:
         logger.info(
             "MQTT connected to %s:%s, subscribing %r (QoS %s)",

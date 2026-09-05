@@ -1,0 +1,47 @@
+name: release-apk
+
+# Builds the Flutter app and attaches the APK to a GitHub Release.
+# Safe to run before the Flutter app exists: the guard step skips the build.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard - skip when the Flutter app is not in the repo yet
+        id: guard
+        run: |
+          if [ -d "flutter" ] && [ -f "flutter/pubspec.yaml" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Flutter app not found - nothing to build yet."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-java@v4
+        if: steps.guard.outputs.present == 'true'
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        if: steps.guard.outputs.present == 'true'
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build release APK
+        if: steps.guard.outputs.present == 'true'
+        working-directory: flutter
+        run: flutter build apk --release
+
+      - name: Attach APK to GitHub Release
+        if: steps.guard.outputs.present == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: flutter/build/app/outputs/flutter-apk/app-release.apk

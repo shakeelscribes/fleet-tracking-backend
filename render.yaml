@@ -1,0 +1,48 @@
+# Render Blueprint (Phase 12): one-click cloud demo on the free tier.
+# Deploy via Dashboard -> New -> Blueprint, or push this file to the repo root.
+# Env vars marked `sync: false` are filled in the dashboard (HiveMQ Cloud values).
+#
+# Free-tier caveats (documented in docs/CLOUD_DEMO.md):
+# - free web service spins down after ~15 min idle -> ~60 s cold start on next request
+# - free Postgres expires after 30 days; recreate or point DATABASE_URL elsewhere (e.g. Neon)
+
+services:
+  - type: web
+    name: fleet-tracking-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Render hands out postgresql:// URLs; Settings normalises to +asyncpg
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fleet-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: MQTT_ENABLED
+        value: "true"
+      - key: MQTT_HOST
+        sync: false # e.g. abc123.s1.eu.hivemq.cloud
+      - key: MQTT_PORT
+        value: "8883"
+      - key: MQTT_USERNAME
+        sync: false
+      - key: MQTT_PASSWORD
+        sync: false
+      - key: MQTT_TLS
+        value: "true"
+      - key: SIMULATOR_ENABLED
+        value: "true" # in-process simulator: buses move on their own in the cloud
+      - key: SEED_PASSWORD
+        value: password123
+      - key: LOG_LEVEL
+        value: INFO
+
+databases:
+  - name: fleet-db
+    databaseName: tracking
+    user: tracking
+    plan: free

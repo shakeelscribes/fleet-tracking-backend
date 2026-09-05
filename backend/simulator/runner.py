@@ -19,6 +19,7 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.db.session import async_session_factory
 from app.models import BusRoute, User, Vehicle
+from app.mqtt.client import mqtt_client_kwargs
 from app.mqtt.payload import GPSMessage
 from simulator.walk import BusWalker
 
@@ -84,6 +85,7 @@ async def run_simulator(stop: asyncio.Event | None = None) -> None:
             port=settings.MQTT_PORT,
             username=settings.MQTT_USERNAME or None,
             password=settings.MQTT_PASSWORD or None,
+            **mqtt_client_kwargs(),
         ) as client:
             while stop is None or not stop.is_set():
                 for walker, vid in walkers:

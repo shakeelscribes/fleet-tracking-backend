@@ -2,7 +2,19 @@
 
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _normalize_database_url(url: str) -> str:
+    """Map common non-async schemes onto asyncpg (PaaS like Render hand out
+    postgresql:// URLs; SQLAlchemy's async engine needs postgresql+asyncpg://).
+    postgresql+asyncpg:// and postgres+asyncpg:// pass through unchanged."""
+    if url.startswith("postgresql://"):
+        return "postgresql+asyncpg://" + url[len("postgresql://") :]
+    if url.startswith("postgres://"):
+        return "postgresql+asyncpg://" + url[len("postgres://") :]
+    return url
 
 
 class Settings(BaseSettings):
@@ -15,6 +27,11 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://tracking:tracking@localhost:5432/tracking"
     TESTING: bool = False  # true in tests: NullPool (safe across pytest event loops)
+
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def _async_db_scheme(cls, v: str) -> str:
+        return _normalize_database_url(v)
 
     # JWT
     JWT_SECRET_KEY: str = (
@@ -30,12 +47,12 @@ class Settings(BaseSettings):
     MQTT_PORT: int = 1883
     MQTT_USERNAME: str = ""
     MQTT_PASSWORD: str = ""
+    MQTT_TLS: bool = False  # true for cloud brokers (HiveMQ Cloud listens on 8883/TLS)
     MQTT_TOPIC_PREFIX: str = "fleet"
 
-    # GPS status derivation
+    # GPS status derivation (moving vs idle threshold is a code constant:
+    # MOVING_SPEED_KMH = 5.0 in app/services/tracking_service.py)
     GPS_STALENESS_SECONDS: int = 60
-    MOVING_SPEED_KMH: float = 5.0
-
     # Seeding (decision #20): demo password for seeded accounts
     SEED_PASSWORD: str = "password123"
 

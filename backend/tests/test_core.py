@@ -122,3 +122,50 @@ def test_validation_error_envelope():
     assert r.status_code == 422
     assert body["code"] == "validation_error"
     assert body["details"][0]["field"] == "limit"
+
+
+# --- Cloud-deploy config normalisation (Phase 12) ----------------------------
+
+
+def test_database_url_normalization():
+    from app.core.config import _normalize_database_url
+
+    assert (
+        _normalize_database_url("postgresql://u:p@host:5432/tracking")
+        == "postgresql+asyncpg://u:p@host:5432/tracking"
+    )
+    assert (
+        _normalize_database_url("postgres://u:p@host:5432/tracking")
+        == "postgresql+asyncpg://u:p@host:5432/tracking"
+    )
+    assert (
+        _normalize_database_url("postgresql+asyncpg://u:p@host/db")
+        == "postgresql+asyncpg://u:p@host/db"
+    )
+
+
+def test_settings_applies_url_normalization(monkeypatch):
+    from app.core.config import Settings
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@db.example/track?sslmode=require")
+    s = Settings(_env_file=None)
+    assert s.DATABASE_URL == "postgresql+asyncpg://u:p@db.example/track?sslmode=require"
+
+
+def test_mqtt_client_kwargs_tls_toggle(monkeypatch):
+    from app.mqtt.client import mqtt_client_kwargs
+
+    monkeypatch.setattr("app.mqtt.client.settings.MQTT_TLS", False)
+    assert mqtt_client_kwargs() == {}
+
+    monkeypatch.setattr("app.mqtt.client.settings.MQTT_TLS", True)
+    kwargs = mqtt_client_kwargs()
+    assert "tls_params" in kwargs  # default TLSParameters -> system CA validation
+
+
+def test_mqtt_client_kwargs_shared_by_simulator():
+    """The simulator must use the same broker-connection policy as the API."""
+    from app.mqtt.client import mqtt_client_kwargs as api_kwargs
+    from simulator.runner import mqtt_client_kwargs as sim_kwargs
+
+    assert sim_kwargs is api_kwargs
