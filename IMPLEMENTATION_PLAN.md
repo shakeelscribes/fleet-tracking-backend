@@ -108,6 +108,8 @@ backend/
 
 ## 5. Explicitly out of scope (recorded, not silently assumed)
 
+- **Production deployment / hosting** (user decision: assessment-only, zero budget — grader runs `docker compose up` locally; production tiers documented in chat, not in scope)
+
 - Public signup / registration (users created via seed/admin only — decision #10)
 - Firebase integration (swap-ready abstraction only — decision #10)
 - REST GPS ingestion adapter (MQTT-only — decision #9)
