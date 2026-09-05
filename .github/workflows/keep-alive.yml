@@ -1,0 +1,30 @@
+name: keep-alive
+
+# Keeps the Render free-tier service warm: free instances sleep after ~15 min
+# without inbound HTTP traffic, and a cold start costs ~60 s. This pings /health
+# every 10 minutes so the demo is always awake (and the simulator keeps publishing).
+#
+# Setup (once, after the first Render deploy):
+#   repo Settings -> Secrets and variables -> Actions -> Variables ->
+#   New repository variable: RENDER_URL = https://<your-service>.onrender.com
+# Until that variable exists, this job is a harmless no-op.
+#
+# Note: GitHub scheduled workflows are best-effort and can lag a few minutes;
+# with a 10-min interval that still stays inside Render's 15-min sleep window.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # manual "Run workflow" button for testing
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render /health
+        if: ${{ vars.RENDER_URL != '' }}
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "${RENDER_URL}/health" || true)
+          echo "keep-alive ping -> HTTP ${code}"
+        env:
+          RENDER_URL: ${{ vars.RENDER_URL }}
