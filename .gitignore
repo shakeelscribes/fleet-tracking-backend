@@ -1,0 +1,82 @@
+# ===== Assessment source material (never commit) =====
+*.pdf
+
+# ===== Agent/skill tooling (local only) =====
+.agents/
+.claude/
+skills-lock.json
+DESIGN_DECISIONS.md
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# Type checking / linting caches
+.mypy_cache/
+.ruff_cache/
+
+# ===== Environment / secrets =====
+.env
+.env.*
+!.env.example
+
+# ===== Databases =====
+*.db
+*.sqlite3
+
+# ===== Docker / compose local state =====
+docker-compose.override.yml
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.swp
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Node / Flutter (frontend, later) =====
+node_modules/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# ===== Keep empty dirs in git =====
+!backend/.gitkeep
+!frontend/.gitkeep
