@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # MQTT
+    MQTT_ENABLED: bool = True  # false in tests / when running without a broker
     MQTT_HOST: str = "localhost"
     MQTT_PORT: int = 1883
     MQTT_USERNAME: str = ""

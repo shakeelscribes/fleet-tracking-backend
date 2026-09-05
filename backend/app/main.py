@@ -1,5 +1,7 @@
-"""FastAPI application factory + lifespan (MQTT subscriber starts here in Phase 6)."""
+"""FastAPI application factory + lifespan (MQTT subscriber, decision #5)."""
 
+import asyncio
+import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -9,15 +11,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
+from app.mqtt.client import mqtt_subscriber_task
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Startup
-    # Phase 6 (decision #5): MQTT subscriber task starts here via app.mqtt.client
-    # Phase 10 (decision #22): in-process simulator starts here when SIMULATOR_ENABLED=true
+    # Startup: in-process MQTT subscriber (decision #5); swap point for a worker.
+    # Phase 10 (decision #22): in-process simulator starts here when SIMULATOR_ENABLED=true.
+    mqtt_task: asyncio.Task | None = None
+    if settings.MQTT_ENABLED:
+        mqtt_task = asyncio.create_task(mqtt_subscriber_task())
     yield
-    # Shutdown
+    if mqtt_task is not None:
+        mqtt_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await mqtt_task
 
 
 def create_app() -> FastAPI:

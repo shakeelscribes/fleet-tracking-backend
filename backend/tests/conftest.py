@@ -8,6 +8,7 @@ import os
 
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://tracking:tracking@localhost:5432/tracking_test"
 os.environ["TESTING"] = "true"
+os.environ["MQTT_ENABLED"] = "false"  # no broker in the test run
 
 from datetime import UTC, datetime  # noqa: E402
 from decimal import Decimal  # noqa: E402

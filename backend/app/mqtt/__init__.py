@@ -1,1 +1,1 @@
-"""MQTT ingestion layer (built in Phase 6)."""
+"""MQTT ingestion: payload/topic parsing, message handling, subscriber loop (decision #4, #15)."""
