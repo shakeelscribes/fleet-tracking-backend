@@ -46,6 +46,13 @@ That boots **Postgres + Mosquitto + API**, then the API container runs
 - Host ports: API **8000**, broker **1883**, Postgres **5433** (deliberately not 5432 so a
   local dev Postgres can run alongside)
 
+Optional — make the fleet drive itself (walks the seeded buses along their routes,
+publishing fixes every 2 s):
+
+```bash
+docker compose --profile sim up -d
+```
+
 ### 90-second demo
 
 ```bash

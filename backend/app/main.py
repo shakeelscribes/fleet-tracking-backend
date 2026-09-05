@@ -1,7 +1,6 @@
 """FastAPI application factory + lifespan (MQTT subscriber, decision #5)."""
 
 import asyncio
-import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -12,20 +11,24 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.mqtt.client import mqtt_subscriber_task
+from simulator.runner import run_simulator
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup: in-process MQTT subscriber (decision #5); swap point for a worker.
-    # Phase 10 (decision #22): in-process simulator starts here when SIMULATOR_ENABLED=true.
-    mqtt_task: asyncio.Task | None = None
+    # In-process simulator (decision #22) for the cloud demo, where there is no
+    # second container to run `python -m simulator`.
+    background: list[asyncio.Task] = []
     if settings.MQTT_ENABLED:
-        mqtt_task = asyncio.create_task(mqtt_subscriber_task())
+        background.append(asyncio.create_task(mqtt_subscriber_task()))
+    if settings.SIMULATOR_ENABLED:
+        stop = asyncio.Event()
+        background.append(asyncio.create_task(run_simulator(stop)))
     yield
-    if mqtt_task is not None:
-        mqtt_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await mqtt_task
+    for task in background:
+        task.cancel()
+    await asyncio.gather(*background, return_exceptions=True)
 
 
 def create_app() -> FastAPI:
