@@ -95,6 +95,7 @@ backend/
 | **9. Docker** | Dockerfile + docker-compose (api, db, mosquitto; `--profile sim` for simulator) | `docker compose up` → healthy stack; `docker compose run --rm api python -m app.seed` seeds |
 | **10. Simulator** | `simulator/` package | `python -m simulator` publishes ~0.5 msg/s/vehicle; vehicles move along waypoints; status flips moving/idle/offline correctly |
 | **11. README** | Submission README: setup, architecture diagram, DB design, endpoint table, auth flow, assignment logic, GPS flow, compose instructions | matches PDF submission checklist |
+| **12. Cloud demo (decision #22 — broker mode B)** | Render deploy config (env: `DATABASE_URL` → Render Postgres, HiveMQ Cloud creds, `SIMULATOR_ENABLED` flag); GitHub Actions workflows: Flutter release-APK build (`--dart-define=API_BASE_URL`) attached to Releases; README live-demo section (URL, seeded credentials, cold-start note) | APK in Releases installs + works against Render URL; GPS flows end-to-end via HiveMQ Cloud; **compose stack + offline grading untouched** |
 
 ## 4. End-to-end verification (definition of done)
 
@@ -108,7 +109,7 @@ backend/
 
 ## 5. Explicitly out of scope (recorded, not silently assumed)
 
-- **Production deployment / hosting** (user decision: assessment-only, zero budget — grader runs `docker compose up` locally; production tiers documented in chat, not in scope)
+- **Paid/production-grade hosting** — the **free** cloud demo (Render + HiveMQ Cloud, APK releases) is **in scope per decision #22**; anything paid or production-grade remains out of scope
 
 - Public signup / registration (users created via seed/admin only — decision #10)
 - Firebase integration (swap-ready abstraction only — decision #10)
