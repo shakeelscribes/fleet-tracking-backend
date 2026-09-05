@@ -9,6 +9,9 @@ import os
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://tracking:tracking@localhost:5432/tracking_test"
 os.environ["TESTING"] = "true"
 
+from datetime import UTC, datetime  # noqa: E402
+from decimal import Decimal  # noqa: E402
+
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -16,7 +19,7 @@ from app.core.security import hash_password  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import async_session_factory, engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import BusRoute, User, Vehicle  # noqa: E402
+from app.models import BusRoute, GPSPoint, User, Vehicle, VehicleCurrentLocation  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -92,6 +95,46 @@ def make_vehicle():
             await session.commit()
             await session.refresh(vehicle)
             return vehicle
+
+    return _make
+
+
+@pytest.fixture
+def make_gps_point():
+    """Insert a GPSPoint (and upsert the current-location row when current=True)."""
+
+    async def _make(
+        vehicle: Vehicle,
+        *,
+        lat: str = "13.082700",
+        lng: str = "80.270700",
+        speed: str = "0.0",
+        recorded_at: datetime | None = None,
+        current: bool = True,
+    ) -> GPSPoint:
+        recorded_at = recorded_at or datetime.now(UTC)
+        async with async_session_factory() as session:
+            point = GPSPoint(
+                vehicle_id=vehicle.id,
+                lat=Decimal(lat),
+                lng=Decimal(lng),
+                speed=Decimal(speed),
+                recorded_at=recorded_at,
+            )
+            session.add(point)
+            if current:
+                await session.merge(
+                    VehicleCurrentLocation(
+                        vehicle_id=vehicle.id,
+                        lat=point.lat,
+                        lng=point.lng,
+                        speed=point.speed,
+                        recorded_at=recorded_at,
+                    )
+                )
+            await session.commit()
+            await session.refresh(point)
+            return point
 
     return _make
 
