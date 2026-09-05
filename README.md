@@ -107,7 +107,6 @@ with `409` codes like `route_already_assigned` / `vehicle_in_use` / `route_name_
 Python 3.11 and a Postgres (e.g. `docker run -e POSTGRES_PASSWORD=tracking -p 5432:5432 postgres:16-alpine`):
 
 ```bash
-cd backend
 py -3.11 -m venv .venv
 .venv/Scripts/pip.exe install -e ".[dev]"        # Linux/macOS: .venv/bin/pip
 cp .env.example .env                              # adjust DATABASE_URL if needed
@@ -126,14 +125,13 @@ server — no SQLite mocks; tests drop/recreate the schema per test for full iso
 
 ```bash
 # needs a Postgres reachable at localhost:5432 (user/pass tracking:tracking)
-cd backend
-.venv/Scripts/python.exe -m pytest -q             # 186 tests
+.venv/Scripts/python.exe -m pytest -q             # 200 tests
 .venv/Scripts/python.exe -m pytest -q --cov=app   # coverage report
 .venv/Scripts/ruff.exe check app tests            # lint (clean)
 # or, with make:  make test / make coverage / make lint
 ```
 
-Current numbers: **186 passed · 96% line coverage** (all services and schemas at 100%;
+Current numbers: **200 passed · 96% line coverage** (all services and schemas at 100%;
 the uncovered remainder is the broker-connection loop verified by live E2E tests and a
 production-only launcher shim).
 
@@ -171,7 +169,7 @@ production-only launcher shim).
 ## Layout
 
 ```
-backend/app/
+app/
 ├── api/v1/        # auth, me, admin (routes/vehicles/users)
 ├── core/          # config, security (JWT/argon2), deps, exceptions, loops
 ├── db/            # async engine/session, DeclarativeBase
@@ -181,7 +179,15 @@ backend/app/
 ├── mqtt/          # payload validation, message handler, broker client
 ├── seed.py        # idempotent demo data (python -m app.seed)
 └── main.py        # app assembly + lifespan (MQTT subscriber)
+
+simulator/          # GPS bus simulator (python -m simulator, compose "sim" profile)
+tests/              # 200 integration tests against real PostgreSQL
+alembic/            # migrations; Dockerfile + docker-compose.yml at the repo root
 ```
+
+> **Submission layout (per the assessment):** this repository is the *backend*.
+> The Flutter client lives in its own companion repository
+> (`<same-name>-frontend`), with its own README and an APK-release workflow.
 
 Design decisions and their rationale live in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md);
 the build order in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).

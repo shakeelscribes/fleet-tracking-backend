@@ -8,7 +8,7 @@ via `docker compose up` — this cloud path is the bonus on top (decision #18/#2
 Flutter app / curl / grader
         │ HTTPS + JWT
         ▼
-Render web service (this repo's backend/Dockerfile)
+Render web service (this repo's Dockerfile)
    ├─ alembic upgrade head && python -m app.seed   (on boot)
    ├─ in-process MQTT subscriber ──┐
    ├─ in-process simulator (buses)─┤  TLS :8883
@@ -45,7 +45,7 @@ repo. `render.yaml` at the repo root provisions the web service + free Postgres 
 `MQTT_HOST` (the HiveMQ URL), `MQTT_USERNAME`, `MQTT_PASSWORD`.
 
 **Option B — Manual:** New → *Web Service* → point at the repo → runtime **Docker**
-(dockerfilePath `backend/Dockerfile`) → add env vars:
+(dockerfilePath `Dockerfile` (repo root)) → add env vars:
 
 | Key | Value |
 |---|---|

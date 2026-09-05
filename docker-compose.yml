@@ -33,7 +33,7 @@ services:
       - "1883:1883"
 
   api:
-    build: ./backend
+    build: .
     environment:
       DATABASE_URL: postgresql+asyncpg://tracking:tracking@db:5432/tracking
       # demo-only secret; fine for the assessment, not for production
@@ -61,7 +61,7 @@ services:
   # routes and publishes fixes like real devices would.
   #   docker compose --profile sim up
   simulator:
-    build: ./backend
+    build: .
     profiles: ["sim"]
     command: ["python", "-m", "simulator"]
     environment:

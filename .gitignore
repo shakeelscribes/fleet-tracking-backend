@@ -5,7 +5,6 @@
 .agents/
 .claude/
 skills-lock.json
-DESIGN_DECISIONS.md
 
 # ===== Python =====
 __pycache__/
@@ -78,5 +77,4 @@ node_modules/
 .flutter-plugins-dependencies
 
 # ===== Keep empty dirs in git =====
-!backend/.gitkeep
-!frontend/.gitkeep
+# (frontend/ will live in its own repository per the PDF's two-repo submission)

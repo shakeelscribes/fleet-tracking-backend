@@ -31,11 +31,10 @@ jobs:
           cache: pip
 
       - name: Install
-        run: pip install -e "backend[dev]"
+        run: pip install -e ".[dev]"
 
       - name: Lint
-        run: ruff check backend/app backend/simulator backend/tests
+        run: ruff check app simulator tests
 
       - name: Tests (real PostgreSQL)
-        working-directory: backend
         run: pytest -q --cov=app --cov-report=term-missing
