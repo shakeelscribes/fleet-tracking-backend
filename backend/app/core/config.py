@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     GPS_STALENESS_SECONDS: int = 60
     MOVING_SPEED_KMH: float = 5.0
 
+    # Seeding (decision #20): demo password for seeded accounts
+    SEED_PASSWORD: str = "password123"
+
     # Simulator (cloud demo only)
     SIMULATOR_ENABLED: bool = False
     SIMULATOR_INTERVAL_SECONDS: int = 2
