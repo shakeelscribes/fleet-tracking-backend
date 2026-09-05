@@ -17,7 +17,9 @@ class Settings(BaseSettings):
     TESTING: bool = False  # true in tests: NullPool (safe across pytest event loops)
 
     # JWT
-    JWT_SECRET_KEY: str = "change-me-in-real-deployment"
+    JWT_SECRET_KEY: str = (
+        "dev-only-secret-key-change-me-0123456789abcdef-0123456789abcdef"  # >= 32 bytes
+    )
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
