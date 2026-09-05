@@ -1,0 +1,61 @@
+# One-command demo stack (PDF bonus, decision #18/#21):
+#   docker compose up --build
+# -> Postgres + Mosquitto + API (auto-migrated & auto-seeded on boot).
+#
+# GPS demo: docker compose exec mosquitto mosquitto_pub \
+#     -t fleet/1/gps -m '{"vehicle_id":1,"lat":13.0827,"lng":80.2707,"speed":42.5,"timestamp":"2026-09-05T17:45:00Z"}'
+#
+# Swagger UI: http://localhost:8000/docs
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: tracking
+      POSTGRES_PASSWORD: tracking
+      POSTGRES_DB: tracking
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracking -d tracking"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    ports:
+      - "5433:5432"  # host side avoids clashing with a local dev Postgres on 5432;
+                     # the api container always reaches db via the compose network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    volumes:
+      - ./deploy/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "1883:1883"
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tracking:tracking@db:5432/tracking
+      # demo-only secret; fine for the assessment, not for production
+      JWT_SECRET_KEY: compose-demo-secret-0123456789abcdef0123456789abcdef
+      MQTT_ENABLED: "true"
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      SEED_PASSWORD: password123
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 20s
+
+volumes:
+  pgdata:
