@@ -90,7 +90,7 @@ backend/
 | **4. Admin API** | routes/vehicles/users CRUD + `PUT /admin/users/{id}/assignment` | tests: admin CRUD OK; non-admin → 403 `forbidden`; duplicate email → 409 |
 | **5. /me API** | `me`, `me/route`, `me/vehicle`, `me/vehicle/location`, `me/vehicle/history` | tests: assigned user sees own data; **unassigned → 403 `no_assignment`; User A cannot read User B (403/404)** |
 | **6. MQTT ingestion** | aiomqtt subscriber (lifespan), payload validation, handler (insert history + upsert current) | unit tests: valid payload persists both tables; malformed payload logged + discarded, no crash |
-| **7. Seed** | `python -m app.seed` → 2+ users (1 admin), 2 routes w/ waypoints, 2 vehicles, assignments | re-run idempotent; User A↔Route A/BUS-001, User B↔Route B/BUS-002 |
+| **7. Seed** | `python -m app.seed` → 4 users + 1 admin, 4 routes w/ waypoints (real Chennai corridors), 4 vehicles, strict 1:1:1 assignments | re-run idempotent; ravi↔Route A/BUS-001, priya↔Route B/BUS-002, arun↔Route C/BUS-003, divya↔Route D/BUS-004 |
 | **8. Test suite green** | full pytest run vs real Postgres test DB | `pytest` exits 0; authorization tests present and passing |
 | **9. Docker** | Dockerfile + docker-compose (api, db, mosquitto; `--profile sim` for simulator) | `docker compose up` → healthy stack; `docker compose run --rm api python -m app.seed` seeds |
 | **10. Simulator** | `simulator/` package | `python -m simulator` publishes ~0.5 msg/s/vehicle; vehicles move along waypoints; status flips moving/idle/offline correctly |
@@ -100,9 +100,9 @@ backend/
 
 1. `docker compose up -d` → api + db + mosquitto healthy
 2. `docker compose run --rm api python -m app.seed`
-3. `docker compose --profile sim up -d simulator` → GPS flowing
-4. Login as **User A** → `GET /me/route` returns **Route A only**, `/me/vehicle/location` returns BUS-001 moving along the polyline
-5. Login as **User B** → sees only Route B/BUS-002; calling anything of User A's is impossible by API design (`/me/*` scoping) and covered by tests
+3. `docker compose --profile sim up -d simulator` → GPS flowing for **all 4 vehicles simultaneously**
+4. Login as **ravi (User A)** → `GET /me/route` returns **Route A only**, `/me/vehicle/location` returns BUS-001 moving along the polyline
+5. Login as **priya (User B)** → sees only Route B/BUS-002; cross-user access is impossible by API design (`/me/*` scoping) and covered by tests; remaining users follow the same pattern
 6. Stop simulator 60 s → status becomes `offline`
 7. `pytest` green; README complete
 
