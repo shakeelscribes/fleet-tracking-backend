@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://tracking:tracking@localhost:5432/tracking"
+    TESTING: bool = False  # true in tests: NullPool (safe across pytest event loops)
 
     # JWT
     JWT_SECRET_KEY: str = "change-me-in-real-deployment"
