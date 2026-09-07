@@ -94,6 +94,10 @@ which is how the grader installs the app without building it.
 
 ## Free-tier caveats (expected behaviour, not bugs)
 
+- **Keep-alive (in place):** a [cronjob.org](https://cronjob.org) job pings
+  `/health` every 10 minutes so the free Render service effectively never
+  sleeps (a GitHub Actions `keep-alive.yml` schedule runs as a free backup).
+  Cold starts below should therefore be rare — mostly right after deploys.
 - **Cold starts:** a free Render service sleeps after ~15 min idle; the first request
   afterwards takes ~50–60 s. Hit `/health` twice before demoing.
 - **Free Postgres expires** after 30 days; recreate it (data is disposable seed data) or
