@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.models import GPSPoint, User
+from app.models import GPSPoint, User, VehicleCurrentLocation
 
 
 @pytest.fixture
@@ -194,6 +194,48 @@ class TestVehiclesCRUD:
         r = client.delete(f"/api/v1/admin/vehicles/{vehicle.id}", headers=h)
         assert r.status_code == 409
         assert r.json()["error"]["code"] == "vehicle_in_use"
+
+    async def test_list_includes_current_location(self, client, admin, make_vehicle, db):
+        """Fleet view: latest fix embedded, status derived server-side."""
+        h = await admin()
+        moving = await make_vehicle(code="BUS-101")
+        idle = await make_vehicle(code="BUS-102")
+        now = datetime.now(UTC)
+        db.add_all(
+            [
+                VehicleCurrentLocation(
+                    vehicle_id=moving.id,
+                    lat=Decimal("13.0827"),
+                    lng=Decimal("80.2707"),
+                    speed=Decimal("25.5"),
+                    recorded_at=now,
+                ),
+                VehicleCurrentLocation(
+                    vehicle_id=idle.id,
+                    lat=Decimal("13.0500"),
+                    lng=Decimal("80.2500"),
+                    speed=Decimal("0"),
+                    recorded_at=now,
+                ),
+            ]
+        )
+        await db.commit()
+        r = client.get("/api/v1/admin/vehicles", headers=h)
+        assert r.status_code == 200
+        rows = {v["code"]: v for v in r.json()}
+        m = rows["BUS-101"]["current_location"]
+        assert m is not None
+        assert m["lat"] == 13.0827 and m["lng"] == 80.2707
+        assert m["status"] == "moving"
+        assert rows["BUS-102"]["current_location"]["status"] == "idle"
+
+    async def test_list_vehicle_without_fix_has_null_location(self, client, admin, make_vehicle):
+        """No fix yet -> current_location is null (Flutter renders 'no data yet')."""
+        h = await admin()
+        await make_vehicle(code="BUS-104")
+        r = client.get("/api/v1/admin/vehicles", headers=h)
+        rows = {v["code"]: v for v in r.json()}
+        assert rows["BUS-104"]["current_location"] is None
 
 
 # --- Users CRUD --------------------------------------------------------------

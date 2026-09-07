@@ -15,8 +15,10 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.models import BusRoute, GPSPoint, User, Vehicle, VehicleCurrentLocation
 from app.schemas.route import RouteCreate, RouteUpdate
+from app.schemas.tracking import VehicleLiveOut
 from app.schemas.user import AssignmentUpdate, UserCreate, UserUpdate
-from app.schemas.vehicle import VehicleCreate, VehicleUpdate
+from app.schemas.vehicle import AdminVehicleOut, VehicleCreate, VehicleUpdate
+from app.services.tracking_service import derive_status
 
 # --- Routes ------------------------------------------------------------------
 
@@ -91,6 +93,36 @@ async def create_vehicle(db: AsyncSession, data: VehicleCreate) -> Vehicle:
 async def list_vehicles(db: AsyncSession) -> list[Vehicle]:
     result = await db.execute(select(Vehicle).order_by(Vehicle.id))
     return list(result.scalars().all())
+
+
+def _admin_vehicle_out(vehicle: Vehicle) -> AdminVehicleOut:
+    """Build the fleet-view row: vehicle + live location with derived status."""
+    loc = vehicle.current_location  # joined-loaded (decision #8)
+    live = None
+    if loc is not None:
+        live = VehicleLiveOut(
+            vehicle_id=vehicle.id,
+            vehicle_code=vehicle.code,
+            lat=float(loc.lat),
+            lng=float(loc.lng),
+            speed=float(loc.speed),
+            recorded_at=loc.recorded_at,
+            status=derive_status(loc.recorded_at, loc.speed),
+        )
+    return AdminVehicleOut(
+        id=vehicle.id,
+        code=vehicle.code,
+        name=vehicle.name,
+        is_active=vehicle.is_active,
+        created_at=vehicle.created_at,
+        current_location=live,
+    )
+
+
+async def list_vehicles_with_location(db: AsyncSession) -> list[AdminVehicleOut]:
+    """Fleet overview for the admin map: every vehicle + its latest fix."""
+    result = await db.execute(select(Vehicle).order_by(Vehicle.id))
+    return [_admin_vehicle_out(v) for v in result.scalars().all()]
 
 
 async def get_vehicle(db: AsyncSession, vehicle_id: int) -> Vehicle:

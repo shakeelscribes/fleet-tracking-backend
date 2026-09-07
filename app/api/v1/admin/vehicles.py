@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_db
-from app.schemas.vehicle import VehicleCreate, VehicleOut, VehicleUpdate
+from app.schemas.vehicle import AdminVehicleOut, VehicleCreate, VehicleOut, VehicleUpdate
 from app.services import fleet_admin_service as svc
 
 router = APIRouter(prefix="/vehicles", tags=["admin:vehicles"])
@@ -15,9 +15,9 @@ async def create_vehicle(body: VehicleCreate, db: AsyncSession = Depends(get_db)
     return await svc.create_vehicle(db, body)
 
 
-@router.get("", response_model=list[VehicleOut])
+@router.get("", response_model=list[AdminVehicleOut])
 async def list_vehicles(db: AsyncSession = Depends(get_db)):
-    return await svc.list_vehicles(db)
+    return await svc.list_vehicles_with_location(db)
 
 
 @router.get("/{vehicle_id}", response_model=VehicleOut)
