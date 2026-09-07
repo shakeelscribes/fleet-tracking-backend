@@ -42,6 +42,21 @@ class TestDeriveStatus:
 # --- Endpoints ----------------------------------------------------------------
 
 
+class TestMeProfile:
+    async def test_profile_returns_identity_and_role(self, client, auth_headers, make_user):
+        """Client uses this to route by role (admin fleet view vs driver tracking)."""
+        await make_user(email="admin@test.com", password="password123", is_admin=True)
+        r = client.get("/api/v1/me/profile", headers=auth_headers("admin@test.com", "password123"))
+        assert r.status_code == 200
+        body = r.json()
+        assert body["email"] == "admin@test.com"
+        assert body["is_admin"] is True
+
+    async def test_profile_anonymous_401(self, client):
+        r = client.get("/api/v1/me/profile")
+        assert r.status_code == 401
+
+
 class TestMeAssignment:
     async def test_assigned_user_sees_both(
         self, client, auth_headers, make_user, make_route, make_vehicle

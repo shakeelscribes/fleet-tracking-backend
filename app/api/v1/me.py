@@ -14,9 +14,20 @@ from app.schemas.tracking import (
     RoutePolylineOut,
     VehicleLiveOut,
 )
+from app.schemas.user import UserOut
 from app.services import tracking_service
 
 router = APIRouter(prefix="/me", tags=["me"])
+
+
+@router.get("/profile", response_model=UserOut)
+async def my_profile(user: Annotated[User, Depends(get_current_user)]) -> User:
+    """The caller's identity: email, role (is_admin), assignment ids.
+
+    Lets the client route by role (admin fleet view vs driver tracking)
+    without decoding JWT claims client-side.
+    """
+    return user
 
 
 @router.get("/assignment", response_model=AssignmentOut)
